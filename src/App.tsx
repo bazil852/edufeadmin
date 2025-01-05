@@ -13,11 +13,14 @@ import FraudDetection from './pages/FraudDetection';
 import Chats from './pages/Chats';
 import Tickets from './pages/Tickets';
 import AuditLogs from './pages/AuditLogs';
+import Loanees from './pages/Loanees';
+import TransactionHistory from './pages/TransactionHistory';
+import Education from './pages/Education';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ChatProvider } from './contexts/ChatContext';
 
-function App() {
+const App: React.FC = () => {
   return (
     <AuthProvider>
       <ChatProvider>
@@ -38,11 +41,14 @@ function App() {
               <Route path="investments" element={<Investments />} />
               <Route path="reports" element={<Reports />} />
               <Route path="user-investments" element={<UserInvestments />} />
+              <Route path="loanees" element={<Loanees />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="fraud-detection" element={<FraudDetection />} />
               <Route path="chats" element={<Chats />} />
               <Route path="tickets" element={<Tickets />} />
               <Route path="audit-logs" element={<AuditLogs />} />
+              <Route path="transactions" element={<TransactionHistory />} />
+              <Route path="education" element={<Education />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -50,6 +56,6 @@ function App() {
       </ChatProvider>
     </AuthProvider>
   );
-}
+};
 
 export default App;

@@ -26,6 +26,17 @@ const FraudDetection: React.FC = () => {
     ));
   };
 
+  const handleBlockUser = (userId: string) => {
+    // In a real app, this would make an API call to block the user
+    console.log('Blocking user:', userId);
+    // Update alerts to show user is blocked
+    setAlerts(alerts.map(alert =>
+      alert.userId === userId
+        ? { ...alert, status: 'resolved' as const }
+        : alert
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -77,6 +88,7 @@ const FraudDetection: React.FC = () => {
         onView={handleViewAlert}
         onAssign={handleAssignAlert}
         onUpdateStatus={handleUpdateStatus}
+        onBlockUser={handleBlockUser}
       />
 
       <Modal

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import Modal from '../components/Modal';
 import AnnouncementList from '../components/announcements/AnnouncementList';
 import AnnouncementForm from '../components/announcements/AnnouncementForm';
+import AnnouncementMetrics from '../components/announcements/AnnouncementMetrics';
 import { dummyAnnouncements } from '../data/dummyAnnouncements';
 import { Announcement } from '../types/announcement';
 
@@ -10,6 +11,14 @@ const Announcements: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [announcements, setAnnouncements] = useState(dummyAnnouncements);
+
+  // Example metrics data
+  const metrics = {
+    delivered: 1234,
+    failed: 45,
+    pending: 78,
+    totalRecipients: 1357
+  };
 
   const handleCreateAnnouncement = (data: any) => {
     console.log('Create announcement:', data);
@@ -37,6 +46,8 @@ const Announcements: React.FC = () => {
           Create Announcement
         </button>
       </div>
+
+      <AnnouncementMetrics metrics={metrics} />
 
       <AnnouncementList
         announcements={announcements}

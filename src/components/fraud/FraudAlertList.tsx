@@ -1,21 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Shield, Clock, User } from 'lucide-react';
 import { FraudAlert, FraudRiskLevel } from '../../types/fraud';
 import ActionMenu from '../ActionMenu';
+import UserDetailsPopover from './UserDetailsPopover';
+import { formatActivityDate } from '../../utils/dateUtils';
 
 interface FraudAlertListProps {
   alerts: FraudAlert[];
   onView: (alert: FraudAlert) => void;
   onAssign: (alert: FraudAlert) => void;
   onUpdateStatus: (alert: FraudAlert, status: FraudAlert['status']) => void;
+  onBlockUser: (userId: string) => void;
 }
 
 const FraudAlertList: React.FC<FraudAlertListProps> = ({
   alerts,
   onView,
   onAssign,
-  onUpdateStatus
+  onUpdateStatus,
+  onBlockUser
 }) => {
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   const getRiskLevelColor = (level: FraudRiskLevel) => {
     switch (level) {
       case 'critical': return 'bg-red-100 text-red-800';
@@ -58,9 +64,27 @@ const FraudAlertList: React.FC<FraudAlertListProps> = ({
                   </span>
                 </td>
                 <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
-                    <User size={16} className="text-gray-400" />
-                    <span>{alert.userName}</span>
+                  <div className="relative">
+                    <button
+                      className="flex items-center gap-2 hover:text-[#114A55]"
+                      onClick={() => setSelectedUserId(selectedUserId === alert.userId ? null : alert.userId)}
+                    >
+                      <User size={16} className="text-gray-400" />
+                      <span>{alert.userName}</span>
+                    </button>
+                    {selectedUserId === alert.userId && (
+                      <div className="absolute left-0 mt-2 z-50">
+                        <UserDetailsPopover
+                          userName={alert.userName}
+                          email={alert.userEmail}
+                          phone={alert.userPhone}
+                          onBlock={() => {
+                            onBlockUser(alert.userId);
+                            setSelectedUserId(null);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="py-3 px-4">
@@ -77,7 +101,7 @@ const FraudAlertList: React.FC<FraudAlertListProps> = ({
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <Clock size={16} className="text-gray-400" />
-                    <span>{new Date(alert.detectedAt).toLocaleString()}</span>
+                    <span>{formatActivityDate(alert.detectedAt)}</span>
                   </div>
                 </td>
                 <td className="py-3 px-4">
@@ -97,6 +121,6 @@ const FraudAlertList: React.FC<FraudAlertListProps> = ({
       </div>
     </div>
   );
-}
+};
 
 export default FraudAlertList;

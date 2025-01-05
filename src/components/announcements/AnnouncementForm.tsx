@@ -14,7 +14,6 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
   onCancel,
   initialData,
 }) => {
-  const [isSpecificUser, setIsSpecificUser] = useState(initialData?.specificUserId ? true : false);
   const [selectedUser, setSelectedUser] = useState(initialData?.specificUserId || '');
 
   const userOptions = dummyUsers.map(user => ({
@@ -29,16 +28,16 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
       title: formData.get('title'),
       content: formData.get('content'),
       type: formData.get('type'),
-      segments: isSpecificUser ? [] : Array.from(formData.getAll('segments')),
+      segments: selectedUser ? [] : Array.from(formData.getAll('segments')),
       publishAt: formData.get('publishAt'),
-      specificUserId: isSpecificUser ? selectedUser : undefined,
+      specificUserId: selectedUser || undefined,
       notificationMethod: formData.get('notificationMethod'),
     };
     onSubmit(data);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <input
@@ -89,48 +88,39 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({
       </div>
 
       <div>
-        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            checked={isSpecificUser}
-            onChange={(e) => setIsSpecificUser(e.target.checked)}
-            className="rounded border-gray-300 text-[#114A55] focus:ring-[#114A55]"
-          />
-          <span>Send to specific user</span>
-        </label>
-      </div>
-
-      {isSpecificUser ? (
-        <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
+        <div className="space-y-4">
           <SearchableSelect
             options={userOptions}
             value={selectedUser}
             onChange={setSelectedUser}
-            placeholder="Select a user..."
-            label="Select User"
+            placeholder="Select specific user (optional)"
+            label="Specific User"
           />
+
+          {!selectedUser && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">User Segments</label>
+              <div className="space-y-2">
+                {['all', 'verified', 'investors', 'new-users'].map((segment) => (
+                  <label key={segment} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="segments"
+                      value={segment}
+                      defaultChecked={initialData?.segments?.includes(segment)}
+                      className="rounded border-gray-300 text-[#114A55] focus:ring-[#114A55]"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      {segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Target Segments</label>
-          <div className="space-y-2">
-            {['all', 'verified', 'investors', 'new-users'].map((segment) => (
-              <label key={segment} className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="segments"
-                  value={segment}
-                  defaultChecked={initialData?.segments?.includes(segment)}
-                  className="rounded border-gray-300 text-[#114A55] focus:ring-[#114A55]"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Notification Method</label>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Chat, Message } from '../types/chat';
 import { dummyChats, dummyMessages } from '../data/dummyChats';
+import { dummyUsers } from '../data/dummyData';
 
 interface ChatContextType {
   chats: Chat[];
@@ -9,6 +10,7 @@ interface ChatContextType {
   selectChat: (chatId: string) => void;
   sendMessage: (chatId: string, content: string) => void;
   updateChatStatus: (chatId: string, status: 'new' | 'in-progress' | 'resolved') => void;
+  startNewChat: (userId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -20,8 +22,29 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const selectChat = (chatId: string) => {
     setSelectedChatId(chatId);
-    // Mark chat as in-progress when selected
     updateChatStatus(chatId, 'in-progress');
+  };
+
+  const startNewChat = (userId: string) => {
+    const user = dummyUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    const newChat: Chat = {
+      id: `chat_${Date.now()}`,
+      userName: user.name,
+      email: user.email,
+      phone: '+502 1234-5678', // In a real app, this would come from the user data
+      status: 'new',
+      lastMessage: 'Chat started',
+      lastMessageTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChats(prev => [newChat, ...prev]);
+    setMessages(prev => ({
+      ...prev,
+      [newChat.id]: []
+    }));
+    setSelectedChatId(newChat.id);
   };
 
   const sendMessage = (chatId: string, content: string) => {
@@ -36,7 +59,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       [chatId]: [...(prev[chatId] || []), newMessage],
     }));
 
-    // Update chat's last message
     setChats(prev =>
       prev.map(chat =>
         chat.id === chatId
@@ -72,6 +94,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         selectChat,
         sendMessage,
         updateChatStatus,
+        startNewChat,
       }}
     >
       {children}

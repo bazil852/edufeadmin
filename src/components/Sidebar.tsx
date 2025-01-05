@@ -11,7 +11,10 @@ import {
   Ticket, 
   FileText,
   Megaphone,
-  ShieldAlert
+  ShieldAlert,
+  Landmark,
+  History,
+  GraduationCap
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -21,7 +24,10 @@ const Sidebar: React.FC = () => {
     { to: "/employees", icon: Building2, label: "Employees" },
     { to: "/investments", icon: Briefcase, label: "Investments" },
     { to: "/user-investments", icon: DollarSign, label: "User Investments" },
+    { to: "/transactions", icon: History, label: "Transactions" },
+    { to: "/loanees", icon: Landmark, label: "Loanees" },
     { to: "/announcements", icon: Megaphone, label: "Announcements" },
+    { to: "/education", icon: GraduationCap, label: "Education" },
     { to: "/fraud-detection", icon: ShieldAlert, label: "Fraud Detection" },
     { to: "/chats", icon: MessageSquare, label: "Chats" },
     { to: "/tickets", icon: Ticket, label: "Tickets" },

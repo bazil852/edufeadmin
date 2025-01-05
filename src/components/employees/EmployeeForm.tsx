@@ -1,17 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
+import RoleSelector from './RoleSelector';
+import { EmployeeRole } from '../../types/employee';
 
 interface EmployeeFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  currentUserRole?: EmployeeRole;
 }
 
-const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
+const EmployeeForm: React.FC<EmployeeFormProps> = ({ 
+  onSubmit, 
+  onCancel,
+  currentUserRole = 'super_admin'
+}) => {
+  const [role, setRole] = useState<EmployeeRole>('basic_admin');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData);
+    const data = {
+      ...Object.fromEntries(formData),
+      role
+    };
     onSubmit(data);
   };
+
+  // Only super_admin can assign any role
+  // finance_admin can only assign basic_admin
+  // basic_admin cannot assign roles
+  const canAssignRoles = currentUserRole === 'super_admin' || 
+    (currentUserRole === 'finance_admin' && role === 'basic_admin');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -26,18 +44,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Username</label>
-          <input
-            type="text"
-            name="username"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
           <label className="block text-sm font-medium text-gray-700">Email</label>
           <input
             type="email"
@@ -46,6 +52,31 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <RoleSelector
+          value={role}
+          onChange={setRole}
+          disabled={!canAssignRoles}
+        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Department</label>
+          <select 
+            name="department"
+            required
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          >
+            <option value="">Select a department</option>
+            <option value="Finance">Finance</option>
+            <option value="Operations">Operations</option>
+            <option value="Support">Support</option>
+            <option value="HR">HR</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Password</label>
           <input
@@ -56,36 +87,15 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Role</label>
-          <select 
-            name="role"
+          <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+          <input
+            type="password"
+            name="confirmPassword"
             required
+            minLength={8}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          >
-            <option value="">Select a role</option>
-            <option>Investment Advisor</option>
-            <option>Financial Analyst</option>
-            <option>Customer Support</option>
-            <option>HR Manager</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Department</label>
-          <select 
-            name="department"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          >
-            <option value="">Select a department</option>
-            <option>Finance</option>
-            <option>Operations</option>
-            <option>Support</option>
-            <option>HR</option>
-          </select>
+          />
         </div>
       </div>
 

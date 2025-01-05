@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock, AlertCircle } from 'lucide-react';
 import { Ticket } from '../../types/ticket';
 import { dummyTickets } from '../../data/dummyTickets';
+import { formatActivityDate } from '../../utils/dateUtils';
 
 interface TicketListProps {
   onViewTicket: (ticket: Ticket) => void;
@@ -62,7 +63,7 @@ const TicketList: React.FC<TicketListProps> = ({ onViewTicket }) => {
                   </span>
                 </td>
                 <td className="py-3 px-4">{ticket.assignedTo || '-'}</td>
-                <td className="py-3 px-4 text-sm text-gray-500">{ticket.createdAt}</td>
+                <td className="py-3 px-4 text-sm text-gray-500">{formatActivityDate(ticket.createdAt)}</td>
               </tr>
             ))}
           </tbody>

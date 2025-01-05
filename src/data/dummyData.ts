@@ -95,14 +95,14 @@ export const recentActivities = [
     user: 'Carlos Hernández',
     action: 'New investment in Tech Growth Fund',
     amount: 25000,
-    timestamp: '2024-03-15 14:30'
+    timestamp: '2025-01-15T14:30:00'
   },
   {
     id: '2',
     type: 'kyc',
     user: 'Ana María Santos',
     action: 'KYC documents submitted',
-    timestamp: '2024-03-15 13:45'
+    timestamp: '2025-01-15T13:45:00'
   },
   {
     id: '3',
@@ -110,7 +110,7 @@ export const recentActivities = [
     user: 'Isabella Mejía',
     action: 'Withdrawal request',
     amount: 5000,
-    timestamp: '2024-03-15 11:20'
+    timestamp: '2025-01-15T11:20:00'
   },
   {
     id: '4',
@@ -118,13 +118,13 @@ export const recentActivities = [
     user: 'José David Rodriguez',
     action: 'New investment in Real Estate Portfolio',
     amount: 50000,
-    timestamp: '2024-03-15 10:15'
+    timestamp: '2025-01-15T10:15:00'
   },
   {
     id: '5',
     type: 'kyc',
     user: 'Luis Fernando Paz',
     action: 'KYC verification completed',
-    timestamp: '2024-03-15 09:30'
+    timestamp: '2025-01-15T09:30:00'
   }
 ];

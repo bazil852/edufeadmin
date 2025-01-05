@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, User, FileText } from 'lucide-react';
 import { AuditLog } from '../../types/audit';
+import { formatActivityDate } from '../../utils/dateUtils';
 
 interface AuditLogListProps {
   logs: AuditLog[];
@@ -61,7 +62,7 @@ const AuditLogList: React.FC<AuditLogListProps> = ({ logs }) => {
                     </div>
                   </td>
                   <td className="py-3 px-4 font-mono text-sm">{log.ipAddress}</td>
-                  <td className="py-3 px-4 text-sm text-gray-500">{log.timestamp}</td>
+                  <td className="py-3 px-4 text-sm text-gray-500">{formatActivityDate(log.timestamp)}</td>
                 </tr>
               );
             })}

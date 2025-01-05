@@ -1,5 +1,6 @@
 import React from 'react';
 import ActionMenu from '../ActionMenu';
+import { formatActivityDate } from '../../utils/dateUtils';
 
 const InvestmentTable: React.FC = () => {
   const investments = [
@@ -8,7 +9,7 @@ const InvestmentTable: React.FC = () => {
       user: 'John Doe',
       package: 'Tech Growth Fund',
       amount: 25000,
-      date: '2024-03-15',
+      date: '2025-01-15T10:00:00',
       status: 'active',
       returns: 2800,
     },
@@ -17,11 +18,10 @@ const InvestmentTable: React.FC = () => {
       user: 'Sarah Wilson',
       package: 'Real Estate Portfolio',
       amount: 50000,
-      date: '2024-03-10',
+      date: '2025-01-10T14:30:00',
       status: 'pending',
       returns: 4200,
     },
-    // Add more dummy data as needed
   ];
 
   const handleView = (investment: any) => {
@@ -57,7 +57,7 @@ const InvestmentTable: React.FC = () => {
                 <td className="py-3 px-4">{investment.user}</td>
                 <td className="py-3 px-4">{investment.package}</td>
                 <td className="py-3 px-4">${investment.amount.toLocaleString()}</td>
-                <td className="py-3 px-4">{investment.date}</td>
+                <td className="py-3 px-4">{formatActivityDate(investment.date)}</td>
                 <td className="py-3 px-4">
                   <span className={`px-2 py-1 rounded-full text-sm ${
                     investment.status === 'active' 

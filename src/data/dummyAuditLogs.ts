@@ -17,7 +17,7 @@ export const dummyAuditLogs: AuditLog[] = [
       }
     },
     ipAddress: '192.168.1.100',
-    timestamp: '2024-03-15 14:30:00'
+    timestamp: '2025-01-15T14:30:00'
   },
   {
     id: '2',
@@ -33,7 +33,7 @@ export const dummyAuditLogs: AuditLog[] = [
       }
     },
     ipAddress: '192.168.1.101',
-    timestamp: '2024-03-15 13:45:00'
+    timestamp: '2025-01-15T13:45:00'
   },
   {
     id: '3',
@@ -51,6 +51,6 @@ export const dummyAuditLogs: AuditLog[] = [
       }
     },
     ipAddress: '192.168.1.102',
-    timestamp: '2024-03-15 12:15:00'
+    timestamp: '2025-01-15T12:15:00'
   }
 ];

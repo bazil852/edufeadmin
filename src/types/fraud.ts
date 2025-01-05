@@ -13,6 +13,8 @@ export interface FraudAlert {
   id: string;
   userId: string;
   userName: string;
+  userEmail: string;
+  userPhone: string;
   riskLevel: FraudRiskLevel;
   status: FraudAlertStatus;
   triggerType: FraudTriggerType;

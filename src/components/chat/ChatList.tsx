@@ -1,4 +1,5 @@
 import React from 'react';
+import { Phone } from 'lucide-react';
 import { useChat } from '../../contexts/ChatContext';
 
 interface ChatListProps {
@@ -24,15 +25,24 @@ const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChat }) => {
               <h3 className="font-semibold text-gray-900">{chat.userName}</h3>
               <span className="text-sm text-gray-500">{chat.lastMessageTime}</span>
             </div>
-            <div className="flex justify-between items-start">
-              <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
-              <span className={`px-2 py-1 rounded-full text-xs ${
-                chat.status === 'new' ? 'bg-green-100 text-green-800' :
-                chat.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {chat.status}
-              </span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>{chat.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Phone size={16} className="text-gray-400" />
+                <span>{chat.phone}</span>
+              </div>
+              <div className="flex justify-between items-start">
+                <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  chat.status === 'new' ? 'bg-green-100 text-green-800' :
+                  chat.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {chat.status}
+                </span>
+              </div>
             </div>
           </div>
         ))}

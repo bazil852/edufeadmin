@@ -1,13 +1,17 @@
-import React from 'react';
-import { Users, TrendingUp, Wallet, AlertCircle, ArrowUpRight, Clock, FileCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, TrendingUp, Wallet, AlertCircle, Clock, FileCheck, Briefcase, DollarSign, Calendar } from 'lucide-react';
 import { recentActivities } from '../data/dummyData';
+import { formatActivityDate } from '../utils/dateUtils';
+import DashboardCard from '../components/dashboard/DashboardCard';
+import ROICard from '../components/dashboard/ROICard';
+import AverageMetricCard from '../components/dashboard/AverageMetricCard';
 
 const Dashboard: React.FC = () => {
   const stats = [
-    { icon: Users, label: 'Total Users', value: '1,234', change: '+12%' },
-    { icon: TrendingUp, label: 'Total Investments', value: '$2.5M', change: '+8%' },
-    { icon: Wallet, label: 'Active Portfolios', value: '890', change: '+15%' },
-    { icon: AlertCircle, label: 'Pending KYC', value: '45', change: '-5%' },
+    { icon: Users, label: 'Total Users', value: '1,234', change: '+12%', link: '/users' },
+    { icon: TrendingUp, label: 'Total Investments', value: '$2.5M', change: '+8%', link: '/investments' },
+    { icon: Wallet, label: 'Active Portfolios', value: '890', change: '+15%', link: '/user-investments' },
+    { icon: AlertCircle, label: 'Pending KYC', value: '45', change: '-5%', link: '/users' },
   ];
 
   const investmentData = [
@@ -24,17 +28,48 @@ const Dashboard: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center justify-between">
-              <stat.icon className="text-[#114A55]" size={24} />
-              <span className={`text-sm font-semibold ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                {stat.change}
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-gray-600 text-sm">{stat.label}</p>
-          </div>
+          <DashboardCard
+            key={stat.label}
+            icon={stat.icon}
+            title={stat.label}
+            value={stat.value}
+            change={stat.change}
+            link={stat.link}
+          />
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ROICard
+          title="User Investment ROI"
+          value={125000}
+          percentage={15.8}
+        />
+        <ROICard
+          title="Edufe Investment ROI"
+          value={450000}
+          percentage={22.4}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <AverageMetricCard
+          title="Average Portfolios per User"
+          value={2.8}
+          icon={Briefcase}
+        />
+        <AverageMetricCard
+          title="Average Investment Amount"
+          value={32500}
+          icon={DollarSign}
+          suffix="USD"
+        />
+        <AverageMetricCard
+          title="Average Investment Frequency"
+          value="1.5"
+          icon={Calendar}
+          suffix="per month"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -58,7 +93,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm font-medium text-green-600">${activity.amount.toLocaleString()}</p>
                   )}
                 </div>
-                <span className="text-xs text-gray-500">{activity.timestamp}</span>
+                <span className="text-xs text-gray-500">{formatActivityDate(activity.timestamp)}</span>
               </div>
             ))}
           </div>
