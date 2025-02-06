@@ -1,45 +1,53 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
-import ROIConditionInput from './ROIConditionInput';
-import { ROICondition } from '../../types/investment';
+import { Investment } from '../../types/investment';
 
 interface InvestmentFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Partial<Investment>) => void;
   onCancel: () => void;
 }
 
 const InvestmentForm: React.FC<InvestmentFormProps> = ({ onSubmit, onCancel }) => {
-  const [roiConditions, setRoiConditions] = useState<ROICondition[]>([
-    { months: 12, minAmount: 500, roiPercentage: 12 }
-  ]);
+  const [formData, setFormData] = useState({
+    name: '',
+    minInvestmentAmount: '',
+    minReturn: '',
+    maxReturn: '',
+    fixReturn: '',
+    riskLevel: 'Low'
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+    
     const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      minInvestmentAmount: Number(formData.get('minInvestmentAmount')),
-      roiConditions
+      ...formData,
+      minInvestmentAmount: parseFloat(formData.minInvestmentAmount),
+      minReturn: parseFloat(formData.minReturn),
+      maxReturn: parseFloat(formData.maxReturn),
+      fixReturn: parseFloat(formData.fixReturn)
     };
-    onSubmit(data);
-  };
 
-  const handleAddCondition = () => {
-    setRoiConditions([
-      ...roiConditions,
-      { months: 12, minAmount: 500, roiPercentage: 12 }
-    ]);
-  };
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/investment-opportunities/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(data)
+      });
 
-  const handleUpdateCondition = (index: number, updatedCondition: ROICondition) => {
-    const newConditions = [...roiConditions];
-    newConditions[index] = updatedCondition;
-    setRoiConditions(newConditions);
-  };
+      if (!response.ok) {
+        throw new Error('Failed to create investment opportunity');
+      }
 
-  const handleRemoveCondition = (index: number) => {
-    setRoiConditions(roiConditions.filter((_, i) => i !== index));
+      const newInvestment = await response.json();
+      onSubmit(newInvestment);
+    } catch (error) {
+      console.error('Error creating investment:', error);
+      // Handle error (show error message to user)
+    }
   };
 
   return (
@@ -48,62 +56,83 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({ onSubmit, onCancel }) =
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <input
           type="text"
-          name="title"
-          required
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
-        <textarea
-          name="description"
-          rows={3}
-          required
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Minimum Investment Amount (L)
-        </label>
+        <label className="block text-sm font-medium text-gray-700">Minimum Investment Amount (L)</label>
         <input
           type="number"
-          name="minInvestmentAmount"
-          min="500"
-          step="100"
-          required
+          min="0"
+          step="0.01"
+          value={formData.minInvestmentAmount}
+          onChange={(e) => setFormData(prev => ({ ...prev, minInvestmentAmount: e.target.value }))}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
         />
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <label className="block text-sm font-medium text-gray-700">
-            ROI Conditions
-          </label>
-          <button
-            type="button"
-            onClick={handleAddCondition}
-            className="text-[#114A55] hover:text-[#114A55]/80 flex items-center gap-1"
-          >
-            <Plus size={16} />
-            Add Condition
-          </button>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Minimum Return (%)</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.minReturn}
+            onChange={(e) => setFormData(prev => ({ ...prev, minReturn: e.target.value }))}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+            required
+          />
         </div>
 
-        <div className="space-y-4">
-          {roiConditions.map((condition, index) => (
-            <ROIConditionInput
-              key={index}
-              condition={condition}
-              onChange={(updatedCondition) => handleUpdateCondition(index, updatedCondition)}
-              onRemove={() => handleRemoveCondition(index)}
-              isRemovable={roiConditions.length > 1}
-            />
-          ))}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Maximum Return (%)</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.maxReturn}
+            onChange={(e) => setFormData(prev => ({ ...prev, maxReturn: e.target.value }))}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+            required
+          />
         </div>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Fixed Return (%)</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          value={formData.fixReturn}
+          onChange={(e) => setFormData(prev => ({ ...prev, fixReturn: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Risk Level</label>
+        <select
+          value={formData.riskLevel}
+          onChange={(e) => setFormData(prev => ({ ...prev, riskLevel: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        >
+          <option value="Low">Low</option>
+          <option value="Lower">Lower</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">

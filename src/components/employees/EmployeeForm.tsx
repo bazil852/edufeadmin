@@ -1,102 +1,101 @@
 import React, { useState } from 'react';
-import RoleSelector from './RoleSelector';
-import { EmployeeRole } from '../../types/employee';
+import { Camera } from 'lucide-react';
 
 interface EmployeeFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
-  currentUserRole?: EmployeeRole;
 }
 
-const EmployeeForm: React.FC<EmployeeFormProps> = ({ 
-  onSubmit, 
-  onCancel,
-  currentUserRole = 'super_admin'
-}) => {
-  const [role, setRole] = useState<EmployeeRole>('basic_admin');
+const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    phoneNo: '',
+    photo: null as File | null
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      ...Object.fromEntries(formData),
-      role
-    };
-    onSubmit(data);
+    onSubmit(formData);
   };
 
-  // Only super_admin can assign any role
-  // finance_admin can only assign basic_admin
-  // basic_admin cannot assign roles
-  const canAssignRoles = currentUserRole === 'super_admin' || 
-    (currentUserRole === 'finance_admin' && role === 'basic_admin');
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData(prev => ({
+        ...prev,
+        photo: e.target.files![0]
+      }));
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Full Name</label>
-          <input
-            type="text"
-            name="name"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            name="email"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <RoleSelector
-          value={role}
-          onChange={setRole}
-          disabled={!canAssignRoles}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+        <input
+          type="text"
+          value={formData.fullName}
+          onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
         />
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Department</label>
-          <select 
-            name="department"
-            required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          >
-            <option value="">Select a department</option>
-            <option value="Finance">Finance</option>
-            <option value="Operations">Operations</option>
-            <option value="Support">Support</option>
-            <option value="HR">HR</option>
-          </select>
-        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={8}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          />
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Password</label>
+        <input
+          type="password"
+          value={formData.password}
+          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+        <input
+          type="tel"
+          value={formData.phoneNo}
+          onChange={(e) => setFormData(prev => ({ ...prev, phoneNo: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+        <div className="flex items-center justify-center w-full">
+          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Camera size={24} className="text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500">Click to upload photo</p>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+          </label>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            required
-            minLength={8}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          />
-        </div>
+        {formData.photo && (
+          <p className="mt-2 text-sm text-gray-500">
+            Selected: {formData.photo.name}
+          </p>
+        )}
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">

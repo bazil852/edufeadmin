@@ -1,123 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, Wallet, AlertCircle, Clock, FileCheck, Briefcase, DollarSign, Calendar } from 'lucide-react';
-import { recentActivities } from '../data/dummyData';
-import { formatActivityDate } from '../utils/dateUtils';
 import DashboardCard from '../components/dashboard/DashboardCard';
-import ROICard from '../components/dashboard/ROICard';
-import AverageMetricCard from '../components/dashboard/AverageMetricCard';
+
+interface DashboardStats {
+  totalUsers: number;
+  totalInvestments: string;
+  activePortfolios: number;
+  pendingVerifications: number;
+  avgPortfolioPerUser: string;
+}
 
 const Dashboard: React.FC = () => {
-  const stats = [
-    { icon: Users, label: 'Total Users', value: '1,234', change: '+12%', link: '/users' },
-    { icon: TrendingUp, label: 'Total Investments', value: '$2.5M', change: '+8%', link: '/investments' },
-    { icon: Wallet, label: 'Active Portfolios', value: '890', change: '+15%', link: '/user-investments' },
-    { icon: AlertCircle, label: 'Pending KYC', value: '45', change: '-5%', link: '/users' },
-  ];
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const investmentData = [
-    { label: 'Tech Growth Fund', value: 35 },
-    { label: 'Real Estate', value: 25 },
-    { label: 'Car Rental', value: 20 },
-    { label: 'Retail Spaces', value: 15 },
-    { label: 'E-commerce', value: 5 },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/dashboard-statistics`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard statistics');
+        }
+
+        const data = await response.json();
+        setStats(data);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError('Failed to load dashboard statistics');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-16rem)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#114A55]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+        {error}
+      </div>
+    );
+  }
+
+  if (!stats) return null;
 
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Dashboard</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <DashboardCard
-            key={stat.label}
-            icon={stat.icon}
-            title={stat.label}
-            value={stat.value}
-            change={stat.change}
-            link={stat.link}
-          />
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ROICard
-          title="User Investment ROI"
-          value={125000}
-          percentage={15.8}
+        <DashboardCard
+          icon={Users}
+          title="Total Users"
+          value={stats.totalUsers.toString()}
+          change=""
+          link="/users"
         />
-        <ROICard
-          title="Edufe Investment ROI"
-          value={450000}
-          percentage={22.4}
+        <DashboardCard
+          icon={TrendingUp}
+          title="Total Investments"
+          value={`$${parseFloat(stats.totalInvestments).toLocaleString()}`}
+          change=""
+          link="/investments"
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AverageMetricCard
-          title="Average Portfolios per User"
-          value={2.8}
-          icon={Briefcase}
+        <DashboardCard
+          icon={Wallet}
+          title="Active Portfolios"
+          value={stats.activePortfolios.toString()}
+          change=""
+          link="/user-investments"
         />
-        <AverageMetricCard
-          title="Average Investment Amount"
-          value={32500}
-          icon={DollarSign}
-          suffix="USD"
-        />
-        <AverageMetricCard
-          title="Average Investment Frequency"
-          value="1.5"
-          icon={Calendar}
-          suffix="per month"
+        <DashboardCard
+          icon={AlertCircle}
+          title="Pending Verifications"
+          value={stats.pendingVerifications.toString()}
+          change=""
+          link="/users"
         />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h3 className="text-xl font-bold text-[#114A55] mb-4">Recent Activities</h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg">
-                <div className={`p-2 rounded-full ${
-                  activity.type === 'investment' ? 'bg-green-100' :
-                  activity.type === 'kyc' ? 'bg-blue-100' : 'bg-orange-100'
-                }`}>
-                  {activity.type === 'investment' ? <TrendingUp size={16} className="text-green-600" /> :
-                   activity.type === 'kyc' ? <FileCheck size={16} className="text-blue-600" /> :
-                   <Clock size={16} className="text-orange-600" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.user}</p>
-                  <p className="text-sm text-gray-600">{activity.action}</p>
-                  {activity.amount && (
-                    <p className="text-sm font-medium text-green-600">${activity.amount.toLocaleString()}</p>
-                  )}
-                </div>
-                <span className="text-xs text-gray-500">{formatActivityDate(activity.timestamp)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h3 className="text-xl font-bold text-[#114A55] mb-4">Investment Overview</h3>
-          <div className="space-y-4">
-            {investmentData.map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                  <span className="text-sm font-medium text-gray-900">{item.value}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-[#114A55] h-2 rounded-full"
-                    style={{ width: `${item.value}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      
+      <div className="bg-white rounded-xl p-6 shadow-sm border">
+        <h3 className="text-xl font-bold text-[#114A55] mb-4">Average Statistics</h3>
+        <p className="text-lg">
+          Average Portfolios per User: <span className="font-semibold">{parseFloat(stats.avgPortfolioPerUser).toFixed(2)}</span>
+        </p>
       </div>
     </div>
   );
