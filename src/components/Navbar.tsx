@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
         </div>
         <div className="flex items-center space-x-6">
           <LanguageSwitch />
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               className="p-2 text-[#114A55] hover:bg-gray-100 rounded-full relative"
@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
           </div>
           <button className="p-2 text-[#114A55] hover:bg-gray-100 rounded-full">
             <Settings size={20} />
-          </button>
+          </button> */}
           <div className="flex items-center gap-3 border-l pl-6 relative group">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>

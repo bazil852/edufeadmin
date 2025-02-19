@@ -1,3 +1,4 @@
+
 export interface User {
   id: number;
   fullName: string;
@@ -16,9 +17,11 @@ export interface User {
   emailVerificationTokenExpiry: string;
   isPhoneNoVerified: boolean;
   getNotifications: boolean;
+  sourceOfIncome: string | null;
   bio: string;
   createdAt: string;
   updatedAt: string;
+  identityVerification?: IdentityVerification;
 }
 
 export interface IdentityVerification {

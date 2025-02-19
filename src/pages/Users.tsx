@@ -258,6 +258,7 @@ const Users: React.FC = () => {
                 <tr className="text-gray-600 border-b">
                   <th className="text-left py-3 px-4">Full Name</th>
                   <th className="text-left py-3 px-4">Email</th>
+                  <th className="text-left py-3 px-4">Source of Income</th>
                   <th className="text-left py-3 px-4">Role</th>
                   <th className="text-left py-3 px-4">Verification Status</th>
                   <th className="text-left py-3 px-4">Actions</th>
@@ -272,6 +273,11 @@ const Users: React.FC = () => {
                   >
                     <td className="py-3 px-4">{user.fullName}</td>
                     <td className="py-3 px-4">{user.email}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                        {user.sourceOfIncome || 'Not Specified'}
+                      </span>
+                    </td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                         {user.role}
