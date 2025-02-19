@@ -2,10 +2,23 @@ import React, { useState,useEffect } from 'react';
 import { Search, Filter, Plus } from 'lucide-react';
 import Modal from '../components/Modal';
 import EmployeeForm from '../components/employees/EmployeeForm';
-import { fetchUsers } from '../services/api';
+import { fetchUsers, deleteUser } from '../services/api';
+import { logAuditEvent, AuditActions } from '../services/auditLogger';
 import { User } from '../types/user';
+import { useAuth } from '../contexts/AuthContext';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import { useNavigate } from 'react-router-dom';
 
 const Employees: React.FC = () => {
+  const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser?.role !== 'ADMIN') {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [employees, setEmployees] = useState<User[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<User[]>([]);
@@ -13,6 +26,9 @@ const Employees: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const loadEmployees = async () => {
@@ -30,7 +46,7 @@ const Employees: React.FC = () => {
     };
 
     loadEmployees();
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     let filtered = [...employees];
@@ -52,29 +68,129 @@ const Employees: React.FC = () => {
   const handleAddEmployee = async (data: any) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/register-employee`, {
-        method: 'POST',
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      const isEdit = !!selectedEmployee;
+      
+      const formData = {
+        ...data,
+        role: data.role
+      };
+
+      const url = isEdit 
+        ? `${import.meta.env.VITE_API_URL}/user/edit-employee/${selectedEmployee?.id}`
+        : `${import.meta.env.VITE_API_URL}/user/register-employee`;
+
+      const response = await fetch(url, {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify({
-          ...data,
-          role: 'ADMIN'
-        })
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add employee');
+        throw new Error(`Failed to ${isEdit ? 'update' : 'add'} employee`);
       }
 
-      const newEmployee = await response.json();
-      setEmployees(prev => [...prev, newEmployee]);
-      setFilteredEmployees(prev => [...prev, newEmployee]);
+      const employee = await response.json();
+      
+      if (isEdit) {
+        // Log employee update
+        await logAuditEvent({
+          user: currentUser!,
+          action: AuditActions.EMPLOYEE.UPDATE,
+          ipAddress: ip,
+          description: `Employee ${employee.fullName} was updated`,
+          metadata: {
+            employeeId: employee.id,
+            oldRole: selectedEmployee.role,
+            newRole: data.role,
+            changes: {
+              role: data.role !== selectedEmployee.role ? { from: selectedEmployee.role, to: data.role } : undefined,
+              email: data.email !== selectedEmployee.email ? { from: selectedEmployee.email, to: data.email } : undefined,
+              phoneNo: data.phoneNo !== selectedEmployee.phoneNo ? { from: selectedEmployee.phoneNo, to: data.phoneNo } : undefined
+            }
+          }
+        });
+
+        setEmployees(prev => prev.map(emp => emp.id === employee.id ? employee : emp));
+        setFilteredEmployees(prev => prev.map(emp => emp.id === employee.id ? employee : emp));
+      } else {
+        // Log employee creation
+        await logAuditEvent({
+          user: currentUser!,
+          action: AuditActions.EMPLOYEE.CREATE,
+          ipAddress: ip,
+          description: `New employee ${employee.fullName} was created`,
+          metadata: {
+            employeeId: employee.id,
+            role: employee.role,
+            email: employee.email
+          }
+        });
+
+        setEmployees(prev => [...prev, employee]);
+        setFilteredEmployees(prev => [...prev, employee]);
+      }
+      
       setIsAddModalOpen(false);
+      setSelectedEmployee(null);
+      setRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error adding employee:', err);
       // Handle error (show error message to user)
+    }
+  };
+
+  const handleDelete = (employee: User) => {
+    setSelectedEmployee(employee);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedEmployee) return;
+
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const { ip } = await ipResponse.json();
+
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${selectedEmployee.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete employee');
+      }
+
+      // Log employee deletion
+      await logAuditEvent({
+        user: currentUser!,
+        action: AuditActions.EMPLOYEE.DELETE,
+        ipAddress: ip,
+        description: `Employee ${selectedEmployee.fullName} was deleted`,
+        metadata: {
+          employeeId: selectedEmployee.id,
+          role: selectedEmployee.role,
+          email: selectedEmployee.email
+        }
+      });
+
+      // Update local state
+      const updatedEmployees = employees.filter(emp => emp.id !== selectedEmployee.id);
+      setEmployees(updatedEmployees);
+      setFilteredEmployees(updatedEmployees);
+      
+      setIsDeleteModalOpen(false);
+      setSelectedEmployee(null);
+    } catch (err) {
+      console.error('Error deleting employee:', err);
+      setError('Failed to delete employee');
     }
   };
 
@@ -130,9 +246,9 @@ const Employees: React.FC = () => {
               className="bg-transparent border-none focus:ring-0"
             >
               <option value="all">All Roles</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPPORT">Support</option>
-              <option value="MANAGER">Manager</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="BASIC">BASIC</option>
+              <option value="FINANCE">FINANCE</option>
             </select>
           </div>
         </div>
@@ -150,7 +266,7 @@ const Employees: React.FC = () => {
                   <th className="text-left py-3 px-4">Email</th>
                   <th className="text-left py-3 px-4">Role</th>
                   <th className="text-left py-3 px-4">Phone</th>
-                  <th className="text-left py-3 px-4">Status</th>
+                  <th className="text-left py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,14 +280,24 @@ const Employees: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">{employee.phoneNo || '-'}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        employee.isEmailVerified && employee.isPhoneNoVerified
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {employee.isEmailVerified && employee.isPhoneNoVerified ? 'Active' : 'Pending Verification'}
-                      </span>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsAddModalOpen(true);
+                          }}
+                          className="text-[#114A55] hover:text-[#114A55]/80 px-3 py-1 rounded-md hover:bg-gray-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(employee)}
+                          className="text-red-600 hover:text-red-700 px-3 py-1 rounded-md hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -183,14 +309,34 @@ const Employees: React.FC = () => {
 
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Add New Employee"
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setSelectedEmployee(null);
+          setRefreshTrigger(prev => prev + 1);
+        }}
+        title={selectedEmployee ? "Edit Employee" : "Add New Employee"}
       >
         <EmployeeForm
           onSubmit={handleAddEmployee}
-          onCancel={() => setIsAddModalOpen(false)}
+          initialData={selectedEmployee}
+          onCancel={() => {
+            setIsAddModalOpen(false);
+            setSelectedEmployee(null);
+            setRefreshTrigger(prev => prev + 1);
+          }}
         />
       </Modal>
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedEmployee(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Employee"
+        message={`Are you sure you want to delete ${selectedEmployee?.fullName}? This action cannot be undone.`}
+      />
     </div>
   );
 };

@@ -16,7 +16,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ onSubmit, onCancel }) => {
 
     setIsUploading(true);
     const formData = new FormData(e.target as HTMLFormElement);
-    formData.append('VideoFile', selectedFile);
+    formData.append('video', selectedFile);
     
     try {
       await onSubmit(formData);

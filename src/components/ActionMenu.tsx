@@ -40,13 +40,13 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ onEdit, onDelete, onView }) => 
             <Eye size={16} />
             View Details
           </button>
-          <button
+          {/* <button
             onClick={() => { onEdit(); setIsOpen(false); }}
             className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
           >
             <Edit2 size={16} />
             Edit
-          </button>
+          </button> */}
           <button
             onClick={() => { onDelete(); setIsOpen(false); }}
             className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50 flex items-center gap-2"

@@ -3,12 +3,15 @@ import { Plus, Filter, Calendar, AlertTriangle } from 'lucide-react';
 import Modal from '../components/Modal';
 import InvestmentForm from '../components/investments/InvestmentForm';
 import MarginUpdateModal from '../components/investments/MarginUpdateModal';
+import InvestmentDetailsModal from '../components/investments/InvestmentDetailsModal';
 import { Investment, MarginUpdateOptions } from '../types/investment';
 import { fetchInvestmentOpportunities } from '../services/api';
 
 const Investments: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMarginModalOpen, setIsMarginModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   const [currentMargin, setCurrentMargin] = useState(25);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +132,13 @@ const Investments: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button className="w-full mt-4 px-4 py-2 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90">
+              <button 
+                onClick={() => {
+                  setSelectedInvestment(investment);
+                  setIsDetailsModalOpen(true);
+                }}
+                className="w-full mt-4 px-4 py-2 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90"
+              >
                 View Details
               </button>
             </div>
@@ -156,6 +165,15 @@ const Investments: React.FC = () => {
         onClose={() => setIsMarginModalOpen(false)}
         onConfirm={handleUpdateMargin}
         currentMargin={currentMargin}
+      />
+
+      <InvestmentDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedInvestment(null);
+        }}
+        investment={selectedInvestment}
       />
     </div>
   );

@@ -1,15 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, AlertTriangle } from 'lucide-react';
 import FraudAlertList from '../components/fraud/FraudAlertList';
 import FraudAlertDetail from '../components/fraud/FraudAlertDetail';
 import Modal from '../components/Modal';
 import { dummyFraudAlerts } from '../data/dummyFraudAlerts';
 import { FraudAlert } from '../types/fraud';
+import { useAuth } from '../contexts/AuthContext';
 
 const FraudDetection: React.FC = () => {
+  const { user } = useAuth();
+  const [showDummyPage, setShowDummyPage] = useState(false);
   const [alerts, setAlerts] = useState(dummyFraudAlerts);
   const [selectedAlert, setSelectedAlert] = useState<FraudAlert | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('showDummyFraud');
+    if (savedPreference) {
+      setShowDummyPage(savedPreference === 'true');
+    }
+  }, []);
+
+  const toggleDummyPage = () => {
+    const newValue = !showDummyPage;
+    setShowDummyPage(newValue);
+    localStorage.setItem('showDummyFraud', newValue.toString());
+  };
+
+  if (!showDummyPage) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-8">
+        <img
+          src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800"
+          alt="Coming Soon"
+          className="w-50 h-40  object-cover rounded-xl mb-8 shadow-lg"
+        />
+        <h1 className="text-4xl font-bold text-[#114A55] mb-4 text-center">
+          Fraud Detection System Coming Soon
+        </h1>
+        <p className="text-gray-600 text-lg mb-8 text-center max-w-2xl">
+          We're developing an advanced fraud detection system to help you identify and prevent
+          suspicious activities, protecting your users and their investments.
+        </p>
+        <div className="space-y-4 text-center">
+          <p className="text-gray-500">Expected features:</p>
+          <ul className="text-gray-600 space-y-2">
+            <li>• Real-time fraud detection</li>
+            <li>• Risk scoring and assessment</li>
+            <li>• Behavioral analysis</li>
+            <li>• Automated alert system</li>
+          </ul>
+        </div>
+        {user?.role === 'ADMIN' && (
+          <button
+            onClick={toggleDummyPage}
+            className="mt-8 px-6 py-3 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90 transition-colors"
+          >
+            View Demo Version
+          </button>
+        )}
+      </div>
+    );
+  }
 
   const handleViewAlert = (alert: FraudAlert) => {
     setSelectedAlert(alert);
@@ -40,12 +92,17 @@ const FraudDetection: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Fraud Detection</h2>
-          <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
-            {alerts.filter(a => a.status === 'new').length} New Alerts
-          </span>
+          <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Demo Version</span>
+          <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">{alerts.filter(a => a.status === 'new').length} New Alerts</span>
         </div>
+        <button
+          onClick={toggleDummyPage}
+          className="px-4 py-2 border border-[#114A55] text-[#114A55] rounded-lg hover:bg-[#114A55]/10"
+        >
+          Back to Coming Soon
+        </button>
       </div>
 
       <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-4 items-center justify-between">

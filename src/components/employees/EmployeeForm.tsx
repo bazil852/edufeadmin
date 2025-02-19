@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+const ROLES = ['ADMIN', 'BASIC', 'FINANCE'] as const;
+type Role = typeof ROLES[number];
 
 interface EmployeeFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  initialData?: User | null;
 }
 
-const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
+const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel, initialData }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role !== 'ADMIN') {
+      navigate('/');
+    }
+  }, [user, navigate]);
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    phoneNo: '',
+    fullName: initialData?.fullName || '',
+    email: initialData?.email || '',
+    password: '', // Only required for new employees
+    phoneNo: initialData?.phoneNo || '',
+    role: (initialData?.role || 'BASIC') as Role,
     photo: null as File | null
   });
 
@@ -60,8 +75,22 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
           value={formData.password}
           onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
-          required
+          required={!initialData} // Only required for new employees
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Role</label>
+        <select
+          value={formData.role}
+          onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as Role }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#114A55] focus:outline-none focus:ring-1 focus:ring-[#114A55]"
+          required
+        >
+          {ROLES.map((role) => (
+            <option key={role} value={role}>{role}</option>
+          ))}
+        </select>
       </div>
 
       <div>
@@ -110,7 +139,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ onSubmit, onCancel }) => {
           type="submit"
           className="px-4 py-2 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90"
         >
-          Add Employee
+          {initialData ? 'Update Employee' : 'Add Employee'}
         </button>
       </div>
     </form>

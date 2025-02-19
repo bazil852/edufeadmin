@@ -8,11 +8,18 @@ import KYCActionModal from '../components/users/KYCActionModal';
 import UserPortfolioModal from '../components/users/portfolio/UserPortfolioModal';
 import { User } from '../types/user';
 import { sendKYCNotification } from '../utils/notificationUtils';
+import { exportUsersToCSV } from '../utils/exportUtils';
+import { deleteUser } from '../services/api';
+import { logAuditEvent, AuditActions } from '../services/auditLogger';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const Users: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [selectedUserPortfolio, setSelectedUserPortfolio] = useState<any>(null);
   const [kycAction, setKYCAction] = useState<'hold' | 'reject'>('hold');
@@ -61,10 +68,52 @@ const Users: React.FC = () => {
   };
 
   const handleDelete = (user: User) => {
-    console.log('Delete user:', user);
+    setSelectedUser(user);
+    setIsDeleteModalOpen(true);
   };
 
-  const handleFilterChange = (filters: { search: string; signupDate: string; portfolioValue: string }) => {
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const { ip } = await ipResponse.json();
+
+    try {
+      await deleteUser(selectedUser.id);
+      
+      // Log the audit event
+      await logAuditEvent({
+        user: currentUser!,
+        action: AuditActions.USER.DELETE,
+        ipAddress: ip,
+        description: `User ${selectedUser.fullName} was deleted`,
+        metadata: {
+          deletedUserId: selectedUser.id,
+          deletedUserEmail: selectedUser.email,
+          deletedUserRole: selectedUser.role
+        }
+      });
+
+      // Update local state
+      const updatedUsers = users.filter(u => u.id !== selectedUser.id);
+      setUsers(updatedUsers);
+      setFilteredUsers(updatedUsers);
+      
+      setIsDeleteModalOpen(false);
+      setSelectedUser(null);
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError('Failed to delete user');
+    }
+  };
+
+  const handleFilterChange = (filters: {
+    search: string;
+    role: string;
+    kycStatus: string;
+    verificationStatus: string;
+    dateRange: string;
+  }) => {
     let filtered = [...users];
 
     if (filters.search) {
@@ -74,11 +123,50 @@ const Users: React.FC = () => {
       );
     }
 
-    if (filters.signupDate) {
+    if (filters.role) {
+      filtered = filtered.filter(user => user.role === filters.role);
+    }
+
+    if (filters.kycStatus) {
+      if (filters.kycStatus === 'NOT_SUBMITTED') {
+        filtered = filtered.filter(user => !user.identityVerification);
+      } else {
+        filtered = filtered.filter(user => 
+          user.identityVerification?.status === filters.kycStatus
+        );
+      }
+    }
+
+    if (filters.verificationStatus) {
+      switch (filters.verificationStatus) {
+        case 'BOTH':
+          filtered = filtered.filter(user => 
+            user.isEmailVerified && user.isPhoneNoVerified
+          );
+          break;
+        case 'EMAIL':
+          filtered = filtered.filter(user => 
+            user.isEmailVerified && !user.isPhoneNoVerified
+          );
+          break;
+        case 'PHONE':
+          filtered = filtered.filter(user => 
+            !user.isEmailVerified && user.isPhoneNoVerified
+          );
+          break;
+        case 'NONE':
+          filtered = filtered.filter(user => 
+            !user.isEmailVerified && !user.isPhoneNoVerified
+          );
+          break;
+      }
+    }
+
+    if (filters.dateRange) {
       const now = new Date();
       const filterDate = new Date();
       
-      switch (filters.signupDate) {
+      switch (filters.dateRange) {
         case 'today':
           filterDate.setHours(0, 0, 0, 0);
           break;
@@ -101,7 +189,14 @@ const Users: React.FC = () => {
 
   const handleUpdateKycStatus = async (userId: string, status: 'verified' | 'rejected' | 'hold', reason?: string) => {
     const updatedUsers = users.map(user => 
-      user.id === userId ? { ...user, kycStatus: status } : user
+      user.id === userId ? {
+        ...user,
+        identityVerification: {
+          ...user.identityVerification,
+          status: status === 'hold' ? 'PENDING' : status.toUpperCase(),
+          rejectionReason: status === 'rejected' ? reason : null
+        }
+      } : user
     );
     
     setUsers(updatedUsers);
@@ -132,6 +227,7 @@ const Users: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Users</h2>
         <button 
+          onClick={() => exportUsersToCSV(filteredUsers)}
           className="bg-[#114A55] text-white px-4 py-2 rounded-lg font-montserrat hover:bg-[#114A55]/90 flex items-center gap-2 disabled:opacity-50"
           disabled={isLoading}
         >
@@ -182,12 +278,16 @@ const Users: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        user.isEmailVerified
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        user.identityVerification?.status === 'VERIFIED' 
+                          ? 'bg-green-100 text-green-800' 
+                          : user.identityVerification?.status === 'REJECTED' 
+                            ? 'bg-red-100 text-red-800' 
+                            : user.identityVerification?.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {user.isEmailVerified ? 'Verified' : 'Pending'}
+                        {user.identityVerification?.status || 'NOT SUBMITTED'}
                       </span>
                     </td>
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
@@ -245,6 +345,17 @@ const Users: React.FC = () => {
           userData={selectedUserPortfolio}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete User"
+        message={`Are you sure you want to delete ${selectedUser?.fullName}? This action cannot be undone.`}
+      />
     </div>
   );
 };

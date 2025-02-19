@@ -46,12 +46,12 @@ const AnnouncementList: React.FC<AnnouncementListProps> = ({
             <div className="flex items-center gap-3">
               <AnnouncementStatusBadge status={announcement.status} />
               <div className="flex gap-2">
-                <button
+                {/* <button
                   onClick={() => onPreview(announcement)}
                   className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
                 >
                   Preview
-                </button>
+                </button> */}
                 <button
                   onClick={() => onEdit(announcement)}
                   className="px-3 py-1 text-sm text-white bg-[#114A55] hover:bg-[#114A55]/90 rounded-md"

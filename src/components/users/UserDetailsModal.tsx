@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../Modal';
 import { User, IdentityVerification } from '../../types/user';
+import { logAuditEvent, AuditActions } from '../../services/auditLogger';
 import { fetchUserIdentityVerification } from '../../services/api';
 import { FileCheck, X, Clock, Printer, Phone, Mail, Calendar } from 'lucide-react';
+import KYCActionModal from './KYCActionModal';
 
 interface UserDetailsModalProps {
   user: User | null;
@@ -19,6 +21,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
 }) => {
   const [identityVerification, setIdentityVerification] = useState<IdentityVerification | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
+  const [kycAction, setKYCAction] = useState<'hold' | 'reject'>('hold');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +52,63 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
 
   const getIdImageUrl = (idUrl: string) => {
     return `${import.meta.env.VITE_S3_BUCKET_URL}/${idUrl}`;
+  };
+
+  const handleKYCAction = async (userId: number, status: 'verified' | 'rejected' | 'pending', reason?: string) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      const currentAdmin = JSON.parse(localStorage.getItem('user') || '{}');
+      const apiStatus = status === 'verified' ? 'VERIFIED' : status === 'rejected' ? 'REJECTED' : 'PENDING';
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/identity-verification/${identityVerification?.id}/status/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          status: apiStatus,
+          rejectionReason: status === 'rejected' ? reason : undefined
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update KYC status');
+      }
+
+      const data = await response.json();
+      setIdentityVerification(data);
+
+      // Log the audit event
+      const auditAction = status === 'verified' 
+        ? AuditActions.USER.KYC_APPROVED 
+        : status === 'rejected' 
+          ? AuditActions.USER.KYC_REJECTED 
+          : AuditActions.USER.KYC_HOLD;
+
+      await logAuditEvent({
+        user: currentAdmin,
+        action: auditAction,
+        ipAddress: ip,
+        description: `KYC verification ${status} for user ${user?.fullName}`,
+        metadata: {
+          userId: userId,
+          verificationId: identityVerification?.id,
+          reason: reason,
+          documentType: identityVerification?.idType,
+          status: apiStatus
+        }
+      });
+
+      // Update local state
+      onUpdateKycStatus(userId, status);
+      setIsKYCModalOpen(false);
+      onClose(); // Close the user details modal
+    } catch (err) {
+      console.error('Error updating KYC status:', err);
+      setError('Failed to update KYC status');
+    }
   };
 
   const formatDate = (date: string) => {
@@ -135,7 +196,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-sm text-gray-500">{identityVerification.idType.replace('_', ' ')}</p>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      identityVerification.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                      identityVerification.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
                       identityVerification.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
@@ -174,21 +235,27 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
         <div className="border-t pt-6 flex justify-between items-center">
           <div className="flex gap-3">
             <button
-              onClick={() => onUpdateKycStatus(user.id, 'verified')}
+              onClick={() => handleKYCAction(user.id, 'verified')}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
             >
               <FileCheck size={20} />
               Approve KYC
             </button>
             <button
-              onClick={() => onUpdateKycStatus(user.id, 'rejected')}
+              onClick={() => {
+                setKYCAction('reject');
+                setIsKYCModalOpen(true);
+              }}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
             >
               <X size={20} />
               Reject KYC
             </button>
             <button
-              onClick={() => onUpdateKycStatus(user.id, 'pending')}
+              onClick={() => {
+                setKYCAction('hold');
+                setIsKYCModalOpen(true);
+              }}
               className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center gap-2"
             >
               <Clock size={20} />
@@ -203,6 +270,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
           </button>
         </div>
       </div>
+
+      <KYCActionModal
+        isOpen={isKYCModalOpen}
+        onClose={() => setIsKYCModalOpen(false)}
+        onConfirm={(reason) => handleKYCAction(user.id, kycAction === 'hold' ? 'pending' : 'rejected', reason)}
+        action={kycAction}
+        userName={user.fullName}
+      />
     </Modal>
   );
 };

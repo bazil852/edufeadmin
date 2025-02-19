@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Investment } from '../../types/investment';
+import { logAuditEvent, AuditActions } from '../../services/auditLogger';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface InvestmentFormProps {
   onSubmit: (data: Partial<Investment>) => void;
@@ -7,6 +9,7 @@ interface InvestmentFormProps {
 }
 
 const InvestmentForm: React.FC<InvestmentFormProps> = ({ onSubmit, onCancel }) => {
+  const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     minInvestmentAmount: '',
@@ -19,6 +22,9 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({ onSubmit, onCancel }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const { ip } = await ipResponse.json();
+
     const data = {
       ...formData,
       minInvestmentAmount: parseFloat(formData.minInvestmentAmount),
@@ -43,6 +49,24 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({ onSubmit, onCancel }) =
       }
 
       const newInvestment = await response.json();
+
+      // Log the audit event
+      await logAuditEvent({
+        user: currentUser!,
+        action: AuditActions.INVESTMENT.CREATE,
+        ipAddress: ip,
+        description: `New investment opportunity "${formData.name}" was created`,
+        metadata: {
+          investmentId: newInvestment.id,
+          name: formData.name,
+          minInvestmentAmount: formData.minInvestmentAmount,
+          minReturn: formData.minReturn,
+          maxReturn: formData.maxReturn,
+          fixReturn: formData.fixReturn,
+          riskLevel: formData.riskLevel
+        }
+      });
+
       onSubmit(newInvestment);
     } catch (error) {
       console.error('Error creating investment:', error);

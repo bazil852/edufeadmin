@@ -2,23 +2,13 @@ import React from 'react';
 import { Clock, User, FileText } from 'lucide-react';
 import { AuditLog } from '../../types/audit';
 import { formatActivityDate } from '../../utils/dateUtils';
+import { getActionIcon, formatAction } from '../../utils/auditUtils';
 
 interface AuditLogListProps {
   logs: AuditLog[];
 }
 
 const AuditLogList: React.FC<AuditLogListProps> = ({ logs }) => {
-  const getActionIcon = (action: string) => {
-    if (action.startsWith('user')) return User;
-    if (action.startsWith('investment')) return FileText;
-    return Clock;
-  };
-
-  const formatAction = (action: string) => {
-    const [entity, operation] = action.split('.');
-    return `${operation.charAt(0).toUpperCase() + operation.slice(1)} ${entity}`;
-  };
-
   return (
     <div className="bg-white rounded-lg border">
       <div className="overflow-x-auto">
@@ -40,7 +30,7 @@ const AuditLogList: React.FC<AuditLogListProps> = ({ logs }) => {
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <Icon size={16} className="text-[#114A55]" />
-                      <span>{formatAction(log.action)}</span>
+                      <span>{log.action}</span>
                     </div>
                   </td>
                   <td className="py-3 px-4">{log.employeeName}</td>

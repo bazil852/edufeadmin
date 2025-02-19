@@ -1,15 +1,31 @@
-import React from 'react';
-import { Search, Filter, Calendar, DollarSign } from 'lucide-react';
+import React ,{useState} from 'react';
+import { Search, Filter, Calendar, Shield, Phone } from 'lucide-react';
 
 interface UserFiltersProps {
   onFilterChange: (filters: {
     search: string;
-    signupDate: string;
-    portfolioValue: string;
+    role: string;
+    kycStatus: string;
+    verificationStatus: string;
+    dateRange: string;
   }) => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({ onFilterChange }) => {
+  const [filters, setFilters] = useState({
+    search: '',
+    role: '',
+    kycStatus: '',
+    verificationStatus: '',
+    dateRange: ''
+  });
+
+  const handleFilterChange = (key: string, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
   return (
     <div className="flex flex-wrap gap-4 items-center">
       <div className="relative">
@@ -17,36 +33,69 @@ const UserFilters: React.FC<UserFiltersProps> = ({ onFilterChange }) => {
         <input
           type="text"
           placeholder="Search users..."
+          value={filters.search}
+          onChange={(e) => handleFilterChange('search', e.target.value)}
           className="bg-gray-50 text-gray-900 pl-10 pr-4 py-2 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-[#114A55] border"
-          onChange={(e) => onFilterChange({ search: e.target.value, signupDate: '', portfolioValue: '' })}
         />
       </div>
       
       <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
-        <Calendar size={20} className="text-gray-500" />
+        <Filter size={20} className="text-gray-500" />
         <select 
           className="bg-transparent border-none focus:ring-0"
-          onChange={(e) => onFilterChange({ search: '', signupDate: e.target.value, portfolioValue: '' })}
+          value={filters.role}
+          onChange={(e) => handleFilterChange('role', e.target.value)}
         >
-          <option value="">Sign-up Date</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="quarter">Last 3 Months</option>
+          <option value="">All Roles</option>
+          <option value="INVESTOR">Investors</option>
+          <option value="ADMIN">Admins</option>
+          <option value="SUPPORT">Support</option>
+          <option value="MANAGER">Managers</option>
         </select>
       </div>
 
       <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
-        <DollarSign size={20} className="text-gray-500" />
+        <Shield size={20} className="text-gray-500" />
         <select 
           className="bg-transparent border-none focus:ring-0"
-          onChange={(e) => onFilterChange({ search: '', signupDate: '', portfolioValue: e.target.value })}
+          value={filters.kycStatus}
+          onChange={(e) => handleFilterChange('kycStatus', e.target.value)}
         >
-          <option value="">Portfolio Value</option>
-          <option value="0-10000">$0 - $10,000</option>
-          <option value="10000-50000">$10,000 - $50,000</option>
-          <option value="50000-100000">$50,000 - $100,000</option>
-          <option value="100000+">$100,000+</option>
+          <option value="">All KYC Status</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="PENDING">Pending</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="NOT_SUBMITTED">Not Submitted</option>
+        </select>
+      </div>
+      
+      <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+        <Phone size={20} className="text-gray-500" />
+        <select 
+          className="bg-transparent border-none focus:ring-0"
+          value={filters.verificationStatus}
+          onChange={(e) => handleFilterChange('verificationStatus', e.target.value)}
+        >
+          <option value="">All Verification</option>
+          <option value="BOTH">Fully Verified</option>
+          <option value="EMAIL">Email Only</option>
+          <option value="PHONE">Phone Only</option>
+          <option value="NONE">Not Verified</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+        <Calendar size={20} className="text-gray-500" />
+        <select 
+          className="bg-transparent border-none focus:ring-0"
+          value={filters.dateRange}
+          onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+        >
+          <option value="">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="quarter">Last 3 Months</option>
         </select>
       </div>
     </div>

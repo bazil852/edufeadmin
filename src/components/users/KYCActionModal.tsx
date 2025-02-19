@@ -35,7 +35,7 @@ const KYCActionModal: React.FC<KYCActionModalProps> = ({
   onClose,
   onConfirm,
   action,
-  userName,
+  userName
 }) => {
   const [selectedReason, setSelectedReason] = useState('');
   const [customReason, setCustomReason] = useState('');
@@ -63,7 +63,7 @@ const KYCActionModal: React.FC<KYCActionModalProps> = ({
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          You are about to {action} KYC verification for <span className="font-medium">{userName}</span>.
+          You are about to {action === 'hold' ? 'put on hold' : 'reject'} KYC verification for <span className="font-medium">{userName}</span>.
           Please provide a reason for this action.
         </p>
 
@@ -109,7 +109,9 @@ const KYCActionModal: React.FC<KYCActionModalProps> = ({
           <button
             onClick={handleConfirm}
             disabled={!selectedReason || (selectedReason === 'custom' && !customReason)}
-            className="px-4 py-2 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed ${
+              action === 'reject' ? 'bg-red-600' : 'bg-yellow-500'
+            }`}
           >
             Confirm
           </button>

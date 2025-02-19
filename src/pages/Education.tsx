@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Video, Search, Calendar, Trash2, Plus } from 'lucide-react';
 import Modal from '../components/Modal';
+import { useAuth } from '../contexts/AuthContext';
+import { logAuditEvent, AuditActions } from '../services/auditLogger';
 import UploadForm from '../components/education/UploadForm';
 
 interface LearnVideo {
@@ -12,6 +14,7 @@ interface LearnVideo {
 }
 
 const Education: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [videos, setVideos] = useState<LearnVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +52,14 @@ const Education: React.FC = () => {
   const handleDelete = async (videoId: number) => {
     try {
       setIsDeleting(videoId);
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      
       const accessToken = localStorage.getItem('accessToken');
+      
+      // Get video details before deletion for audit log
+      const video = videos.find(v => v.id === videoId);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/learn-videos/${videoId}`, {
         method: 'DELETE',
         headers: {
@@ -60,6 +70,19 @@ const Education: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete video');
       }
+
+      // Log the audit event for video deletion
+      await logAuditEvent({
+        user: currentUser!,
+        action: AuditActions.EDUCATION.DELETE,
+        ipAddress: ip,
+        description: `Educational video "${video?.title}" was deleted`,
+        metadata: {
+          videoId,
+          title: video?.title,
+          type: video?.type
+        }
+      });
 
       setVideos(videos.filter(video => video.id !== videoId));
     } catch (err) {
@@ -72,6 +95,8 @@ const Education: React.FC = () => {
 
   const handleUpload = async (formData: FormData) => {
     try {
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
       setIsUploading(true);
       const accessToken = localStorage.getItem('accessToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/learn-videos/upload`, {
@@ -87,6 +112,21 @@ const Education: React.FC = () => {
       }
 
       const newVideo = await response.json();
+      
+      // Log the audit event for video creation
+      await logAuditEvent({
+        user: currentUser!,
+        action: AuditActions.EDUCATION.CREATE,
+        ipAddress: ip,
+        description: `New educational video "${newVideo.title}" was uploaded`,
+        metadata: {
+          videoId: newVideo.id,
+          title: newVideo.title,
+          type: newVideo.type,
+          s3Url: newVideo.s3Url
+        }
+      });
+      
       setVideos([newVideo, ...videos]);
       setIsUploadModalOpen(false);
     } catch (err) {

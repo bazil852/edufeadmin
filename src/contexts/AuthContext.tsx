@@ -18,6 +18,7 @@ interface BackendTokens {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: AuthUser | null;
+  hasPermission: (requiredRole: string) => boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -33,6 +34,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const hasPermission = (requiredRole: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    return user.role === requiredRole;
+  };
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated.toString());
   }, [isAuthenticated]);
@@ -83,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, hasPermission, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
