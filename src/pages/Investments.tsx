@@ -64,12 +64,12 @@ const Investments: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Investments</h2>
         <div className="flex gap-4">
-          <button
+          {/* <button
             onClick={() => setIsMarginModalOpen(true)}
             className="px-4 py-2 border border-[#114A55] text-[#114A55] rounded-lg hover:bg-[#114A55]/10"
           >
             Update Return Margin
-          </button>
+          </button> */}
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="bg-[#114A55] text-white px-4 py-2 rounded-lg font-montserrat hover:bg-[#114A55]/90 flex items-center gap-2"

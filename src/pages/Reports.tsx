@@ -1,91 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
-import ReportsSummary from '../components/reports/ReportsSummary';
-import InvestmentMetrics from '../components/reports/InvestmentMetrics';
-import UserActivityChart from '../components/reports/UserActivityChart';
-import ReportFilters from '../components/reports/ReportFilters';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from 'react';
+import { Download, Calendar, Filter, Search } from 'lucide-react';
+import { AccountsPayable, PaymentSchedule } from '../types/payment';
+import AccountsPayableTable from '../components/reports/AccountsPayableTable';
+import PaymentScheduleCard from '../components/reports/PaymentScheduleCard';
 
 const Reports: React.FC = () => {
-  const { user } = useAuth();
-  const [showDummyPage, setShowDummyPage] = useState(false);
+  const [dateRange, setDateRange] = useState('all');
+  const [investmentType, setInvestmentType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const savedPreference = localStorage.getItem('showDummyReports');
-    if (savedPreference) {
-      setShowDummyPage(savedPreference === 'true');
+  // Dummy payment schedules
+  const [schedules] = useState<PaymentSchedule[]>([
+    {
+      id: '1',
+      day: 15,
+      type: 'interest',
+      isActive: true,
+      nextRun: '2024-04-15',
+      description: 'Monthly interest payments for all active investments'
+    },
+    {
+      id: '2',
+      day: 30,
+      type: 'capital',
+      isActive: true,
+      nextRun: '2024-04-30',
+      description: 'Capital repayments for completed investment terms'
     }
-  }, []);
+  ]);
 
-  const toggleDummyPage = () => {
-    const newValue = !showDummyPage;
-    setShowDummyPage(newValue);
-    localStorage.setItem('showDummyReports', newValue.toString());
+  // Dummy accounts payable data
+  const [accountsPayable] = useState<AccountsPayable[]>([
+    {
+      userId: '1',
+      userName: 'John Smith',
+      investmentId: 'inv_1',
+      investmentName: 'Tech Growth Fund',
+      capitalAmount: 10000,
+      interestAmount: 1200,
+      startDate: '2024-01-15',
+      endDate: '2025-01-15',
+      nextPaymentDate: '2024-04-15',
+      totalPaid: 2400,
+      remainingBalance: 8800
+    },
+    {
+      userId: '2',
+      userName: 'Sarah Johnson',
+      investmentId: 'inv_2',
+      investmentName: 'Real Estate Portfolio',
+      capitalAmount: 25000,
+      interestAmount: 2500,
+      startDate: '2024-02-01',
+      endDate: '2025-02-01',
+      nextPaymentDate: '2024-04-15',
+      totalPaid: 5000,
+      remainingBalance: 22500
+    }
+  ]);
+
+  const handleToggleSchedule = (id: string) => {
+    console.log('Toggle schedule:', id);
   };
 
-  if (!showDummyPage) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-8">
-        <img
-          src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=800"
-          alt="Coming Soon"
-          className="w-50 h-40 object-cover rounded-xl mb-8 shadow-lg"
-        />
-        <h1 className="text-4xl font-bold text-[#114A55] mb-4 text-center">
-          Advanced Analytics Coming Soon
-        </h1>
-        <p className="text-gray-600 text-lg mb-8 text-center max-w-2xl">
-          We're developing a comprehensive analytics and reporting system to help you
-          gain valuable insights into your platform's performance and user behavior.
-        </p>
-        <div className="space-y-4 text-center">
-          <p className="text-gray-500">Expected features:</p>
-          <ul className="text-gray-600 space-y-2">
-            <li>• Real-time performance metrics</li>
-            <li>• Custom report generation</li>
-            <li>• Advanced data visualization</li>
-            <li>• Automated reporting schedules</li>
-          </ul>
-        </div>
-        {user?.role === 'ADMIN' && (
-          <button
-            onClick={toggleDummyPage}
-            className="mt-8 px-6 py-3 bg-[#114A55] text-white rounded-lg hover:bg-[#114A55]/90 transition-colors"
-          >
-            View Demo Version
-          </button>
-        )}
-      </div>
-    );
-  }
+  const handleProcessPayment = (accountId: string) => {
+    console.log('Process payment:', accountId);
+  };
+
+  const handleViewDetails = (accountId: string) => {
+    console.log('View details:', accountId);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Reports</h2>
-          <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Demo Version</span>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-[#114A55] font-montserrat">Accounts Payable</h2>
+        <button className="bg-[#114A55] text-white px-4 py-2 rounded-lg hover:bg-[#114A55]/90 flex items-center gap-2">
+          <Download size={20} />
+          Export Report
+        </button>
+      </div>
+
+      {/* Payment Schedules */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {schedules.map(schedule => (
+          <PaymentScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            onToggle={handleToggleSchedule}
+          />
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-4 items-center mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by user or investment..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-[#114A55]"
+          />
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleDummyPage}
-            className="px-4 py-2 border border-[#114A55] text-[#114A55] rounded-lg hover:bg-[#114A55]/10"
+        
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+          <Calendar size={20} className="text-gray-500" />
+          <select 
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="bg-transparent border-none focus:ring-0"
           >
-            Back to Coming Soon
-          </button>
-          <button className="bg-[#114A55] text-white px-4 py-2 rounded-lg font-montserrat hover:bg-[#114A55]/90 flex items-center gap-2">
-            <Download size={20} />
-            Export Report
-          </button>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">Last 3 Months</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border">
+          <Filter size={20} className="text-gray-500" />
+          <select 
+            value={investmentType}
+            onChange={(e) => setInvestmentType(e.target.value)}
+            className="bg-transparent border-none focus:ring-0"
+          >
+            <option value="all">All Investments</option>
+            <option value="tech">Tech Growth Fund</option>
+            <option value="real_estate">Real Estate Portfolio</option>
+            <option value="car_rental">Car Rental Fleet</option>
+          </select>
         </div>
       </div>
 
-      <ReportFilters />
-      <ReportsSummary />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InvestmentMetrics />
-        <UserActivityChart />
+      {/* Accounts Payable Table */}
+      <div className="bg-white rounded-lg border">
+        <AccountsPayableTable
+          accounts={accountsPayable}
+          onProcessPayment={handleProcessPayment}
+          onViewDetails={handleViewDetails}
+        />
       </div>
     </div>
   );

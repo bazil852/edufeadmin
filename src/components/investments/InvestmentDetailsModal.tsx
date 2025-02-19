@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, DollarSign, AlertTriangle, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, AlertTriangle, Calendar, Lock, Settings } from 'lucide-react';
 import Modal from '../Modal';
 import { Investment } from '../../types/investment';
 import { formatCurrency } from '../../utils/formatters';
@@ -83,6 +83,13 @@ const InvestmentDetailsModal: React.FC<InvestmentDetailsModalProps> = ({
 
         <div className="bg-gray-50 p-4 rounded-lg">
           <h4 className="text-sm font-medium text-gray-600 mb-4">Return Rates</h4>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gray-100/80 z-10 rounded-lg"></div>
+            <div className="absolute top-2 right-2 z-20">
+              <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                Temporarily Disabled
+              </span>
+            </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500">Minimum Return</p>
@@ -92,6 +99,19 @@ const InvestmentDetailsModal: React.FC<InvestmentDetailsModalProps> = ({
               <p className="text-sm text-gray-500">Maximum Return</p>
               <p className="text-lg font-semibold text-green-600">+{parseFloat(investment.maxReturn)}%</p>
             </div>
+            <div className="col-span-2 mt-2">
+              <button
+                disabled
+                className="w-full px-4 py-2 bg-gray-100 text-gray-400 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
+              >
+                <Settings size={18} />
+                Customize Return Rates
+              </button>
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                Set specific return percentages for each investment category
+              </p>
+            </div>
+          </div>
           </div>
         </div>
 
@@ -112,6 +132,34 @@ const InvestmentDetailsModal: React.FC<InvestmentDetailsModalProps> = ({
                 <p className="font-medium">{new Date(investment.updatedAt).toLocaleDateString()}</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Investment Limit - Coming Soon */}
+        <div className="bg-gray-50 p-4 rounded-lg relative overflow-hidden">
+          <div className="absolute inset-0 bg-gray-100/80"></div>
+          <div className="absolute top-2 right-2">
+            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+              Coming Soon
+            </span>
+          </div>
+          <div className="relative">
+            <div className="flex items-center gap-2 text-gray-600 mb-2">
+              <Lock size={20} />
+              <span className="text-sm font-medium">Investment Limit</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-semibold text-gray-400">L10,000,000</p>
+              <button
+                disabled
+                className="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed"
+              >
+                Update Limit
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Set maximum investment limit to prevent platform overload
+            </p>
           </div>
         </div>
 
